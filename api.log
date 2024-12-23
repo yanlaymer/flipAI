@@ -1,0 +1,6 @@
+2024-12-23 21:52:54,617 - app - INFO - Received optimization request for period: 2024-12-23 16:52:52.850000+00:00 to 2024-12-23 16:52:52.850000+00:00
+2024-12-23 21:53:00,064 - app - ERROR - Optimization failed
+Traceback (most recent call last):
+  File "/Users/ayannoorlan/Documents/schedule_optimization_flip/mvp/final_mvp/app.py", line 152, in optimize_schedule
+    raise HTTPException(
+fastapi.exceptions.HTTPException: 404: No processes found within the specified date range
