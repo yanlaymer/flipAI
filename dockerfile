@@ -17,4 +17,4 @@ EXPOSE 8000
 ENV NAME FlipShiftAI
 
 # Run app.py when the container launches
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "appv2:app", "--host", "0.0.0.0", "--port", "8000"]
