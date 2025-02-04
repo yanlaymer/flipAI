@@ -1,17 +1,24 @@
-from fastapi import FastAPI, Query, HTTPException, Depends
+from fastapi import FastAPI, Query, HTTPException, Depends, Body
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 from contextlib import asynccontextmanager
+from loguru import logger
+from sqlalchemy.orm import Session
+from src.plannification_tasks_resources import get_all_resources, get_tasks_by_process
 
 # Import your modules
 from src.gather_tasks import gather_all_scheduling_data
 from src.data_scheme import Task, Resource   # your custom data classes
-from src.optimizer_with_workers import build_and_solve_schedule_model
+from src.proccesses_optimizer import build_and_solve_schedule_model
+from src.planification_optimizer import build_and_solve_plan_model
 from src.build_task_resources import build_tasks_and_resources
 from src.api_scheme import ScheduledTaskOut, ScheduledResourceIntervalOut, ScheduleResult
+from src.optimizer import OptimizedProductionScheduler
+from ortools.sat.python import cp_model
+import json
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -43,7 +50,7 @@ def get_db():
         yield conn
 
 
-@app.get("/api/schedule", response_model=ScheduleResult)
+@app.get("/api/optimize", response_model=ScheduleResult)
 def optimize_schedule(
     start: datetime = Query(..., description="Start of scheduling window, e.g. 2024-07-15T06:00"),
     end:   datetime = Query(..., description="End of scheduling window, e.g. 2024-07-16T06:00"),
@@ -137,3 +144,49 @@ def optimize_schedule(
         makespan=makespan_val
     )
     return out
+
+
+class PlanifyRequest(BaseModel):
+    process_id: str
+    preferred_start: datetime
+    time_unit: str = "minute"
+    buffer_ratio: float = 0.2
+    max_solve_time: int = 60
+    scope_id: int = 26
+
+@app.post("/api/planify")
+async def planify_endpoint(
+    request: PlanifyRequest,
+    db = Depends(get_db)
+):
+    tasks = get_tasks_by_process(db, request.process_id)
+
+    logger.info("Sample task requirements:")
+    for i, task in enumerate(tasks[:3]):  # First 3 tasks
+        logger.info(
+            f"Task {task.task_id}: "
+            f"{task.mandatory_equip_count} mandatory equip, "
+            f"{task.optional_equip_count} optional equip, "
+            f"{task.required_workers} workers"
+        )
+    resources = get_all_resources(db, request.scope_id)
+    logger.info("Sample resources:")
+    equip_sample = [r for r in resources if r.resource_type == "EQUIPMENT"][:3]
+    worker_sample = [r for r in resources if r.resource_type == "WORKER"][:3]
+
+    for r in equip_sample:
+        logger.info(f"Equip {r.resource_id}: {r.equipment_category}")
+
+    for r in worker_sample:
+        logger.info(f"Worker {r.resource_id}: {r.skills}")
+    
+    schedule, makespan = build_and_solve_plan_model(
+        tasks=tasks,
+        resources=resources,
+        preferred_start_time=request.preferred_start
+    )
+    
+    return {
+        "schedule": schedule,
+        "makespan": makespan
+    }

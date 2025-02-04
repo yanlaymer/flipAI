@@ -44,3 +44,10 @@ class ScheduleResult(BaseModel):
     by_task: Dict[str, ScheduledTaskOut]
     by_resource: Dict[str, List[ScheduledResourceIntervalOut]]
     makespan: Optional[int] = None
+
+class PlanifyRequest(BaseModel):
+    process_id: str
+    preferred_start: datetime
+    time_unit: str = "minute"
+    buffer_ratio: float = 0.2
+    max_solve_time: int = 60

@@ -6,6 +6,7 @@ from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from loguru import logger
 import sys
+import json
 
 @dataclass
 class ResourceData:
@@ -663,6 +664,8 @@ class OptimizedProductionScheduler:
                 optional_count = task.get('optionalCount', 0)
                 if optional_count > 0:
                     self.model.Add(sum(equipment_vars.values()) <= mandatory_count + 1)
+
+
     def _create_improved_optimization_model(self, processes: List[Dict]) -> Tuple[cp_model.CpModel, Dict]:
         """Create an improved optimization model with more flexible constraints."""
         self.model = cp_model.CpModel()
