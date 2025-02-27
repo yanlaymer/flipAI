@@ -20,18 +20,18 @@ def build_and_solve_plan_model(
     #     equipment category or required skill but a count of 0,
     #     we bump it up to 1.
     # -----------------------------------------------------------
-    for t in tasks:
+    # for t in tasks:
         # If the task specifies an equipment category but no count then require 1 unit.
-        if t.category_equip and (t.mandatory_equip_count + t.optional_equip_count) == 0:
-            logger.debug(f"Adjusting task {t.task_id} equipment count from 0 to 1")
-            t.mandatory_equip_count = 1
+        # if t.category_equip and (t.mandatory_equip_count + t.optional_equip_count) == 0:
+        #     logger.debug(f"Adjusting task {t.task_id} equipment count from 0 to 1")
+        #     t.mandatory_equip_count = 
 
         # Similarly, if you expect tasks to have at least one worker when a skill is needed
         # (or simply by default), update t.required_workers if it is 0.
         # (Adjust this logic to your domain – if a task can be performed without a worker then leave it.)
-        if t.required_workers == 0:
-            logger.debug(f"Adjusting task {t.task_id} worker count from 0 to 1")
-            t.required_workers = 1
+        # if t.required_workers == 0:
+        #     logger.debug(f"Adjusting task {t.task_id} worker count from 0 to 1")
+        #     t.required_workers = 1
 
         # Optionally, if your tasks should have a required skill but the field is empty,
         # you could set a default value here. For example:
