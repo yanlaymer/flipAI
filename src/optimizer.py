@@ -847,3 +847,22 @@ class OptimizedProductionScheduler:
                         )
 
         return issues
+    def _validate_worker_availability(self, worker_id: int, task_start: datetime, task_end: datetime) -> bool:
+        """Check if a worker is available between two datetimes based on stored shifts."""
+        if not self.resource_data or worker_id not in self.resource_data.worker_shifts:
+            return True
+
+        start_minutes = task_start.hour * 60 + task_start.minute
+        end_minutes = task_end.hour * 60 + task_end.minute
+        if task_end.date() != task_start.date():
+            end_minutes += 1440
+
+        for shift_start, shift_end in self.resource_data.worker_shifts[worker_id]:
+            adj_end = shift_end
+            if shift_end <= shift_start:
+                adj_end += 1440
+            if start_minutes >= shift_start and end_minutes <= adj_end:
+                return True
+        return False
+
+
